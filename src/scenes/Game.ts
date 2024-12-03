@@ -24,7 +24,7 @@ export class Game extends Scene {
 
     this.player = new Player(
       this,
-      { x: 512, y: 400 },
+      { x: 250, y: 350 },
       { width: 60, height: 60 },
     );
 
@@ -36,14 +36,47 @@ export class Game extends Scene {
   }
 
   update(): void {
+    this.handleMovementInput();
+  }
+
+  private handleMovementInput(): void {
+    const movementSpeed = 5;
+    let moved = false; 
+
+    // Handle horizontal movement
     if (this.keys.A.isDown) {
-      console.log("LEFT");
-    } else if (this.keys.D.isDown) {
-      console.log("RIGHT");
-    } else if (this.keys.S.isDown) {
-      console.log("DOWN");
-    } else if (this.keys.W.isDown) {
-      console.log("UP");
+      this.player.x -= movementSpeed; // Move left
+      moved = true;
+    }
+    if (this.keys.D.isDown) {
+      this.player.x += movementSpeed; // Move right
+      moved = true;
+    }
+
+    // Handle vertical movement
+    if (this.keys.W.isDown) {
+      this.player.y -= movementSpeed; // Move up
+      moved = true;
+    }
+    if (this.keys.S.isDown) {
+      this.player.y += movementSpeed; // Move down
+      moved = true;
+    }
+
+    // Only check the bounds if the player has moved
+    if (moved) {
+      const sceneBounds = this.cameras.main.worldView;
+
+      this.player.x = Phaser.Math.Clamp(
+        this.player.x,
+        sceneBounds.left,
+        sceneBounds.right - this.player.displayWidth,
+      );
+      this.player.y = Phaser.Math.Clamp(
+        this.player.y,
+        sceneBounds.top,
+        sceneBounds.bottom - this.player.displayHeight,
+      );
     }
   }
 }
