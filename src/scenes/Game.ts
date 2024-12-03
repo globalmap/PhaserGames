@@ -1,6 +1,7 @@
 import { Scene } from "phaser";
 import { Player } from "../Objects/Player";
 import { WASDInput } from "../types/input";
+import { Coin } from "../Objects/Coin";
 
 export class Game extends Scene {
   camera: Phaser.Cameras.Scene2D.Camera;
@@ -28,6 +29,8 @@ export class Game extends Scene {
       { width: 60, height: 60 },
     );
 
+    new Coin(this, { x: 100, y: 400 }).setOrigin(0, 0);
+
     this.keys = this.input.keyboard?.addKeys("W,S,A,D") as WASDInput;
 
     // this.input.once("pointerdown", () => {
@@ -40,8 +43,8 @@ export class Game extends Scene {
   }
 
   private handleMovementInput(): void {
-    const movementSpeed = 5;
-    let moved = false; 
+    const movementSpeed = 7;
+    let moved = false;
 
     // Handle horizontal movement
     if (this.keys.A.isDown) {
