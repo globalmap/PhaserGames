@@ -1,22 +1,30 @@
 import { Scene } from "phaser";
 import { Player } from "../Objects/Player";
-import { WASDInput } from "../types/input";
 import { Coin } from "../Objects/Coin";
+import { CoinCollector } from "../types/CoinCollector";
+import { Position } from "../types/common";
+import { IPlayerInput } from "../types/IPlayerInput";
+import { PlayerInput } from "../types/PlayerInput";
 
 export class Game extends Scene {
-  camera: Phaser.Cameras.Scene2D.Camera;
-  background: Phaser.GameObjects.Image;
-  msg_text: Phaser.GameObjects.Text;
-  player: Player;
-  keys: WASDInput;
+  private camera: Phaser.Cameras.Scene2D.Camera;
+  private background: Phaser.GameObjects.Image;
+  private player: Player;
+  private coins: Coin[] = [];
+  private playerInput: IPlayerInput;
 
   constructor() {
     super("Game");
   }
 
-  prealod() {}
-
   create() {
+    this.physics.world.setBounds(
+      0,
+      0,
+      this.sys.game.canvas.width,
+      this.sys.game.canvas.height,
+    );
+
     this.camera = this.cameras.main;
     this.camera.setBackgroundColor(0x00ff00);
 
@@ -29,13 +37,22 @@ export class Game extends Scene {
       { width: 60, height: 60 },
     );
 
-    new Coin(this, { x: 100, y: 400 }).setOrigin(0, 0);
+    for (let i = 0; i <= 20; i++) {
+      const coinPosition: Position = {
+        x: Phaser.Math.Between(0, this.sys.game.canvas.width),
+        y: Phaser.Math.Between(0, this.sys.game.canvas.height),
+      };
+      this.coins.push(new Coin(this, coinPosition).setOrigin(0, 0));
+    }
 
-    this.keys = this.input.keyboard?.addKeys("W,S,A,D") as WASDInput;
-
-    // this.input.once("pointerdown", () => {
-    //   this.scene.start("GameOver");
-    // });
+    this.playerInput = new PlayerInput(this.input.keyboard);
+    this.physics.add.collider(
+      this.coins,
+      this.player,
+      CoinCollector.collectCoin,
+      undefined,
+      this,
+    );
   }
 
   update(): void {
@@ -46,30 +63,25 @@ export class Game extends Scene {
     const movementSpeed = 7;
     let moved = false;
 
-    // Handle horizontal movement
-    if (this.keys.A.isDown) {
-      this.player.x -= movementSpeed; // Move left
+    if (this.playerInput.isMovingLeft()) {
+      this.player.x -= movementSpeed;
       moved = true;
     }
-    if (this.keys.D.isDown) {
-      this.player.x += movementSpeed; // Move right
+    if (this.playerInput.isMovingRight()) {
+      this.player.x += movementSpeed;
       moved = true;
     }
-
-    // Handle vertical movement
-    if (this.keys.W.isDown) {
-      this.player.y -= movementSpeed; // Move up
+    if (this.playerInput.isMovingUp()) {
+      this.player.y -= movementSpeed;
       moved = true;
     }
-    if (this.keys.S.isDown) {
-      this.player.y += movementSpeed; // Move down
+    if (this.playerInput.isMovingDown()) {
+      this.player.y += movementSpeed;
       moved = true;
     }
 
-    // Only check the bounds if the player has moved
     if (moved) {
       const sceneBounds = this.cameras.main.worldView;
-
       this.player.x = Phaser.Math.Clamp(
         this.player.x,
         sceneBounds.left,

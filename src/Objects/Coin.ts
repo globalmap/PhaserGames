@@ -5,5 +5,6 @@ export class Coin extends Phaser.GameObjects.Sprite {
     super(scene, position.x, position.y, "coin");
 
     scene.add.existing(this);
+    scene.physics.add.existing(this);
   }
 }

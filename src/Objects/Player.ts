@@ -5,5 +5,7 @@ export class Player extends Phaser.GameObjects.Rectangle {
     super(scene, position.x, position.y, size.width, size.height, 0xff0000);
 
     scene.add.existing(this);
+    scene.physics.add.existing(this);
+
   }
 }
