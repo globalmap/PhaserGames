@@ -1,23 +1,24 @@
 import { Scene } from "phaser";
 import { Player } from "../Objects/Player";
-import { Coin } from "../Objects/Coin";
-import { CoinCollector } from "../types/CoinCollector";
-import { Position } from "../types/common";
-import { IPlayerInput } from "../types/IPlayerInput";
-import { PlayerInput } from "../types/PlayerInput";
+import { CoinManager } from "../Objects/CoinManager";
+import { CoinCollector } from "../Objects/CoinCollector";
+import { ScoreManager } from "../Objects/ScoreManager";
 
 export class Game extends Scene {
-  private camera: Phaser.Cameras.Scene2D.Camera;
-  private background: Phaser.GameObjects.Image;
   private player: Player;
-  private coins: Coin[] = [];
-  private playerInput: IPlayerInput;
+  private coins: Phaser.GameObjects.GameObject[] = [];
+  private scoreManager: ScoreManager;
+  private coinManager: CoinManager;
+  private coinCollector: CoinCollector;
+  private gameOverText: Phaser.GameObjects.Text | null = null;
 
   constructor() {
     super("Game");
   }
 
-  create() {
+  create(): void {
+    // Camera setup
+    this.cameras.main.setBackgroundColor(0x00ff00);
     this.physics.world.setBounds(
       0,
       0,
@@ -25,73 +26,87 @@ export class Game extends Scene {
       this.sys.game.canvas.height,
     );
 
-    this.camera = this.cameras.main;
-    this.camera.setBackgroundColor(0x00ff00);
+    // Initialize managers
+    this.coinManager = new CoinManager(this);
+    this.coinCollector = new CoinCollector();
+    this.scoreManager = new ScoreManager(this);
 
-    this.background = this.add.image(512, 384, "background");
-    this.background.setAlpha(0.5);
-
+    // Player setup
     this.player = new Player(
       this,
       { x: 250, y: 350 },
       { width: 60, height: 60 },
     );
 
-    for (let i = 0; i <= 20; i++) {
-      const coinPosition: Position = {
-        x: Phaser.Math.Between(0, this.sys.game.canvas.width),
-        y: Phaser.Math.Between(0, this.sys.game.canvas.height),
-      };
-      this.coins.push(new Coin(this, coinPosition).setOrigin(0, 0));
-    }
+    // Spawn coins
+    this.coins = this.coinManager.spawnCoins(20);
 
-    this.playerInput = new PlayerInput(this.input.keyboard);
-    this.physics.add.collider(
-      this.coins,
-      this.player,
-      CoinCollector.collectCoin,
-      undefined,
-      this,
-    );
+    // Add collisions
+    this.coins.forEach((coin) => {
+      this.physics.add.overlap(
+        this.player,
+        coin,
+        this.handleCoinCollection,
+        undefined,
+        this,
+      );
+    });
   }
 
   update(): void {
-    this.handleMovementInput();
+    if (this.player.active) {
+      this.handleMovementInput();
+    }
   }
 
   private handleMovementInput(): void {
     const movementSpeed = 7;
-    let moved = false;
+    if (this.input.keyboard) {
+      if (this.input.keyboard.addKey("A").isDown)
+        this.player.x -= movementSpeed;
+      if (this.input.keyboard.addKey("D").isDown)
+        this.player.x += movementSpeed;
+      if (this.input.keyboard.addKey("W").isDown)
+        this.player.y -= movementSpeed;
+      if (this.input.keyboard.addKey("S").isDown)
+        this.player.y += movementSpeed;
+    }
+  }
 
-    if (this.playerInput.isMovingLeft()) {
-      this.player.x -= movementSpeed;
-      moved = true;
-    }
-    if (this.playerInput.isMovingRight()) {
-      this.player.x += movementSpeed;
-      moved = true;
-    }
-    if (this.playerInput.isMovingUp()) {
-      this.player.y -= movementSpeed;
-      moved = true;
-    }
-    if (this.playerInput.isMovingDown()) {
-      this.player.y += movementSpeed;
-      moved = true;
-    }
+  private handleCoinCollection(
+    _: unknown,
+    coin:
+      | Phaser.Types.Physics.Arcade.GameObjectWithBody
+      | Phaser.Physics.Arcade.Body
+      | Phaser.Tilemaps.Tile,
+  ): void {
+    this.coinCollector.collect(coin);
+    this.scoreManager.incrementScore();
 
-    if (moved) {
-      const sceneBounds = this.cameras.main.worldView;
-      this.player.x = Phaser.Math.Clamp(
-        this.player.x,
-        sceneBounds.left,
-        sceneBounds.right - this.player.displayWidth,
-      );
-      this.player.y = Phaser.Math.Clamp(
-        this.player.y,
-        sceneBounds.top,
-        sceneBounds.bottom - this.player.displayHeight,
-      );
+    // Remove the collected coin from the array
+    this.coins = this.coins.filter((c) => c !== coin);
+
+    // Check if all coins are collected
+    if (this.coins.length === 0) {
+      this.triggerGameOver();
     }
+  }
+
+  private triggerGameOver(): void {
+    this.gameOverText = this.add.text(
+      this.cameras.main.centerX,
+      this.cameras.main.centerY,
+      "Game Over",
+      {
+        fontSize: "48px",
+        color: "#ffffff",
+      },
+    );
+    this.gameOverText.setOrigin(0.5, 0.5);
+    this.gameOverText.setScrollFactor(0);
+
+    // Stop the player
+    this.player.setActive(false);
+    this.player.setVisible(false);
   }
 }
