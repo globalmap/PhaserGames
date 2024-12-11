@@ -8,7 +8,7 @@ Thumbs.db
 *.vscode
 
 # Vendors
-CollectCoin/node_modules/
+*/node_modules/
 
 # Build
 dist/
