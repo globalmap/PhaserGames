@@ -1,5 +1,5 @@
 import { Boot } from "./scenes/Boot";
-import { Game as MainGame } from "./scenes/Game";
+import { Level1 } from "./scenes/Levels/Level1";
 import { MainMenu } from "./scenes/MainMenu";
 import { Preloader } from "./scenes/Preloader";
 
@@ -23,7 +23,7 @@ const config: Types.Core.GameConfig = {
     mode: Phaser.Scale.FIT,
     autoCenter: Phaser.Scale.CENTER_BOTH,
   },
-  scene: [Boot, Preloader, MainMenu, MainGame],
+  scene: [Boot, Preloader, MainMenu, Level1],
 };
 
 export default new Game(config);
