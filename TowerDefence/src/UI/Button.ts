@@ -20,6 +20,7 @@ export class Button {
       .on("pointerdown", () => {
         this.button.setTexture(pressedTexture);
         this.label.setY(y - 4); // Невелике зміщення тексту вниз при натисканні
+        // this.label.setStyle({ color: "#ffffff63" }); //TODO: Зробити зміну кольору при натисканні
       })
       .on("pointerup", () => {
         this.button.setTexture(defaultTexture);
